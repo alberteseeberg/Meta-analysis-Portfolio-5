@@ -164,9 +164,47 @@ We made a rma - forest plot to represent this.
 3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
 
 ```{r}
-#
+summary(model6)
+#tau^2=0.0208(SE=0.0552)
+#I^2=26.15%
 
-#summary(model) - gives Tau^2 (how much variance between studies), I^2 procentage og tau^2 that could not ... close to 0
+summary(model8)
+#tau^2=3.4995(SE=2.0678) 
+#I^2=98.18% (very close to 100% - Cohen et al. 2014 - seems not to be from same population - heterogeneity)
+
+#yi = Cohen's D, vi= Variance of Cohen's D
+#summary(model) - gives Tau^2 (how much variance between studies), I^2 procentage og tau^2 that could not ... close to 0 if studies variance is overlapping, close to 100 if studies variance is not overlapping at all
+
+
+#Funnel plots
+
+funnel(model6, main = "Random-Effects Model",xlab = "Standardized Mean Difference")
+
+regtest(model6)
+ranktest(model6)
+#Both of them are not significant
+
+#the datapoints lie within 
+
+funnel(model8, main = "Random-Effects Model",xlab = "Standardized Mean Difference")
+#Big outlier - Cohen et al 2014, others lie close together. Not too good. (publication bias?)
+
+regtest(model8)
+#Significant funnel plot assymetry. 
+
+ranktest(model8)
+
+inf = influence(model6)
+print(inf)
+plot(inf)
+
+#Martinez et al. - significant influence 
+
+inf1= influence(model8)
+print(inf1)
+plot(inf1)
+
+#Cohen et al. 2015 - significant influenze
 
 ```
 
