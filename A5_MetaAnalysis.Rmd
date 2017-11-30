@@ -1,0 +1,184 @@
+---
+title: "Assignment 5 - Meta-analysis of pitch in schizophrenia"
+author: "Riccardo Fusaroli"
+date: "3/7/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Building on the shoulders of giants: meta-analysis
+
+## Questions to be answered
+
+1. What is the current evidence for distinctive patterns of pitch mean and pitch sd in schizophrenia? Report how many papers report quantitative estimates, your method to analyze them, the estimated effect size of the difference (mean effect size and standard error for pitch mean, same for pitch sd) and forest plots representing it. 
+
+```{r}
+#setting working directory
+setwd("~/Desktop/3. Semester/Experimental methods 3/Portfolio-5")
+
+#reading relevant packages
+library(metafor)
+library(pacman)
+library(lmerTest)
+
+#reading the data
+data=read.csv("Data.csv", sep=";")
+
+#Effect sizes
+Pitch=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=PitchMeanSchizo, m2i=PitchMeanControls, sd1i=PitchMeanSchizoSD, sd2i=PitchMeanControlsSD, data = data)
+
+#Making a mixed effects model with study/article as  random effect
+Model1 = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=Pitch, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(Model1)
+
+#Meta-analysis optimization
+model2 = rma(yi, vi, data = Pitch, slab=Article)
+forest(model2)
+summary(model2)
+
+#Checking sample sizes 
+PitchES=subset(Pitch[Pitch$vi>0,])
+sum(PitchES$SampleSizeSchizo, na.rm=TRUE)#166
+sum(PitchES$SampleSizeContros, na.rm=TRUE)#95
+
+#Standard Errors
+Pitch1=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=PitchSDSchizo, m2i=PitchSDControls, sd1i=PitchSDSchizoSD, sd2i=PitchSDControlsSD, data = data)
+
+#Making a mixed effects model with study/article as a random effect
+model3 = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=Pitch1, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(model3)
+
+#Meta-analysis optimization
+model4 = rma(yi, vi, data = Pitch1, slab=Article)
+forest(model4)
+summary(model4)
+
+#Checking sample sizes 
+PitchSE=subset(Pitch1[Pitch1$vi>0,])
+sum(PitchSE$SampleSizeSchizo, na.rm=TRUE)#257
+sum(PitchSE$SampleSizeContros, na.rm=TRUE)#156
+
+#yi = Cohen's D, vi= Variance of Cohen's D
+#summary(model) - gives Tau^2 (how much variance between studies), I^2 procentage og tau^2 that could not ... close to 0 if studies variance is overlapping, close to 100 if studies variance is not overlapping at all
+
+```
+
+##Reporting
+Effect sizes.
+Start with calculating Cohne's D (Yi) and the variance for Cohen's D (Vi). We maked a mixed effect model with study/article as a random effect. 
+We made a rma - forest plot to represent this. 
+ 
+4 studies
+ participants with 166 Schizophrenia and 95 comparison participants.
+ The overall estimated difference (Cohen’s d) in pitch variability between the schizophrenia and the comparison groups was 0.18, SE= 0.17
+ 
+ Standard Errors
+ 
+6 studies
+ participants with 257 Schizophrenia and 156 comparison participants.
+ The overall estimated difference (Cohen’s d) in pitch variability between the schizophrenia and the comparison groups was -0.125, SE= 0.58
+
+2. Do the results match your own analysis from Assignment 3? If you add your results to the meta-analysis, do the estimated effect sizes change? Report the new estimates and the new forest plots.
+
+```{r}
+#nice to extract from model -not necessary
+P3Data=read.csv("AllData.csv")
+P3Data=P3Data[-1]
+
+PitchMeanSchizo=mean(P3Data$mean [P3Data$Diagnosis=="Schizophrenia"])
+PitchMeanControls=mean(P3Data$mean [P3Data$Diagnosis=="Control"])
+PitchMeanSchizoSD=sd(P3Data$mean [P3Data$Diagnosis=="Schizophrenia"])
+PitchMeanControlsSD=sd(P3Data$mean [P3Data$Diagnosis=="Control"])
+
+PitchSDSchizo=mean(P3Data$SD [P3Data$Diagnosis=="Schizophrenia"])
+PitchSDControls=mean(P3Data$SD [P3Data$Diagnosis=="Control"])
+
+PitchSDSchizoSD=sd(P3Data$SD [P3Data$Diagnosis=="Schizophrenia"])
+PitchSDControlsSD=sd(P3Data$SD [P3Data$Diagnosis=="Control"])
+
+SampleSizeSchizo=length(unique(P3Data$Subject [P3Data$Diagnosis=="Schizophrenia"]))
+#75
+
+SampleSizeContros=length(unique(P3Data$Subject [P3Data$Diagnosis=="Control"]))
+#74
+
+OurStudy=data.frame(Article="StudyGroup et. al 2017", Year="2017", SampleSizeSchizo, SampleSizeContros, PitchMeanControls, PitchMeanControlsSD, PitchMeanSchizo, PitchMeanSchizoSD, PitchSDControls, PitchSDControlsSD,PitchSDSchizo, PitchSDSchizoSD)
+
+AllStudies=rbind(data,OurStudy)
+
+#Doing meta-analysis again with new data
+
+PitchAll=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=PitchMeanSchizo, m2i=PitchMeanControls, sd1i=PitchMeanSchizoSD, sd2i=PitchMeanControlsSD, data = AllStudies)
+
+#Making a mixed effects model with study/article as  random effect
+Model5 = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=PitchAll, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(Model5)
+
+#Meta-analysis optimization
+model6 = rma(yi, vi, data = PitchAll, slab=Article)
+forest(model6)
+summary(model6)
+
+#Checking sample sizes 
+PitchES1=subset(PitchAll[PitchAll$vi>0,])
+sum(PitchES1$SampleSizeSchizo, na.rm=TRUE) #241
+sum(PitchES1$SampleSizeContros, na.rm=TRUE) #169
+
+#Standard Errors
+PitchAll1=escalc('SMD', n1i=SampleSizeSchizo, n2i=SampleSizeContros, m1i=PitchSDSchizo, m2i=PitchSDControls, sd1i=PitchSDSchizoSD, sd2i=PitchSDControlsSD, data = AllStudies)
+
+#Making a mixed effects model with study/article as a random effect
+model7 = lmer(yi ~ 1 + (1 | Article), weights = 1/vi, data=PitchAll1, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(model7)
+
+#Meta-analysis optimization
+model8 = rma(yi, vi, data = PitchAll1, slab=Article)
+forest(model8)
+summary(model8)
+
+#Checking sample sizes 
+PitchSE1=subset(PitchAll1[PitchAll1$vi>0,])
+sum(PitchSE1$SampleSizeSchizo, na.rm=TRUE) #332
+sum(PitchSE1$SampleSizeContros, na.rm=TRUE) #230
+
+```
+
+Effect sizes.
+Start with calculating Cohne's D (Yi) and the variance for Cohen's D (Vi). We maked a mixed effect model with study/article as a random effect. 
+We made a rma - forest plot to represent this. 
+ 
+5 studies
+ participants with 241 Schizophrenia and 169 comparison participants.
+ The overall estimated difference (Cohen’s d) in pitch variability between the schizophrenia and the comparison groups was 0.17, SE= 0.13
+ 
+ Standard Errors
+ 
+7 studies
+ participants with 332 Schizophrenia and 230 comparison participants.
+ The overall estimated difference (Cohen’s d) in pitch variability between the schizophrenia and the comparison groups was -0.12, SE= 0.43s
+ 
+ 
+3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
+
+```{r}
+#
+
+#summary(model) - gives Tau^2 (how much variance between studies), I^2 procentage og tau^2 that could not ... close to 0
+
+```
+
+## Tips on the process to follow:
+
+- Download the data on all published articles analyzing pitch in schizophrenia: https://www.dropbox.com/s/pmgw8wzc308so1p/Data.csv?dl=0
+- Following the procedure in the slides calculate effect size and standard error of the effect size per each study. N.B. we focus on pitch mean and pitch standard deviation.
+ . first try using lmer (to connect to what you know of mixed effects models)
+ . then use rma() (to get some juicy additional statistics)
+
+- Build a forest plot of the results (forest(model))
+ 
+- Go back to Assignment 3, add your own study to the data table, and re-run meta-analysis. Do the results change?
+
+- Now look at the output of rma() and check tau and I2
