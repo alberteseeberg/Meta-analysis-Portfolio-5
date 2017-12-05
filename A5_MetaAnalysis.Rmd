@@ -179,12 +179,11 @@ summary(model8)
 #Funnel plots
 
 funnel(model6, main = "Random-Effects Model",xlab = "Standardized Mean Difference")
+#the datapoints lie within - but not on both sides - most on the right side (higher than) of the true effect size - evidence for publication bias
 
 regtest(model6)
 ranktest(model6)
 #Both of them are not significant
-
-#the datapoints lie within 
 
 funnel(model8, main = "Random-Effects Model",xlab = "Standardized Mean Difference")
 #Big outlier - Cohen et al 2014, others lie close together. Not too good. (publication bias?)
@@ -204,7 +203,7 @@ inf1= influence(model8)
 print(inf1)
 plot(inf1)
 
-#Cohen et al. 2015 - significant influenze
+#Cohen et al. 2015 - significant influence
 
 ```
 
